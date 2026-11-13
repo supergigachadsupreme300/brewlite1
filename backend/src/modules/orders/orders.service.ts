@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { CreateOrderDto } from './dto/create-order.dto'
 import { UpdateOrderStatusDto, ValidOrderStatus } from './dto/update-order-status.dto'
@@ -64,7 +64,7 @@ export class OrdersService {
 
     // Database transaction: Verify stock, create order, deduct stock
     return this.prisma.$transaction(async (tx) => {
-      // 1. Verify stock for every item
+      // 1. Verify each product exists and has enough stock
       for (const item of items) {
         const product = await tx.product.findUnique({
           where: { id: item.productId },
@@ -114,16 +114,20 @@ export class OrdersService {
         },
       })
 
-      // 3. Deduct stock for each product atomically
+      // 3. Atomically deduct stock, but only if enough stock remains.
+      //    The condition `stock >= quantity` is evaluated by the DB in one statement,
+      //    so concurrent orders cannot oversell even without a version column.
       for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
         })
+
+        if (result.count === 0) {
+          throw new ConflictException(
+            `Sản phẩm mã "${item.productId}" không đủ tồn kho (có thể vừa bị đặt bởi giao dịch khác). Vui lòng thử lại.`,
+          )
+        }
       }
 
        return this.toOrderResponse(createdOrder)

@@ -1,0 +1,113 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{verbatim}
+
+\title{BrewLite -- Cấu trúc cây thư mục dự án}
+\author{BrewLite (Software Engineering)}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section*{Cây thư mục dự án (loại trừ artifact build và dependencies)}
+
+\begin{verbatim}
+BrewLite/
+|-- backend/                          % NestJS backend
+|   |-- prisma/
+|   |   |-- schema.prisma             % Schema CSDL (Product, User, Order, OrderItem, Payment)
+|   |   `-- seed.mjs                  % Du lieu mau
+|   |-- src/
+|   |   |-- main.ts
+|   |   |-- app.module.ts
+|   |   |-- common/
+|   |   |   |-- admin.util.ts
+|   |   |   `-- guards/
+|   |   |       |-- jwt-auth.guard.ts
+|   |   |       `-- roles.guard.ts
+|   |   |-- modules/
+|   |   |   |-- admin/
+|   |   |   |   |-- admin.controller.ts
+|   |   |   |   `-- admin.module.ts
+|   |   |   |-- auth/
+|   |   |   |   |-- auth.controller.ts
+|   |   |   |   |-- auth.module.ts
+|   |   |   |   |-- auth.service.ts
+|   |   |   |   |-- jwt.strategy.ts
+|   |   |   |   `-- dto/
+|   |   |   |       |-- login.dto.ts
+|   |   |   |       `-- register.dto.ts
+|   |   |   |-- cart/
+|   |   |   |   |-- cart.controller.ts
+|   |   |   |   |-- cart.module.ts
+|   |   |   |   `-- cart.service.ts
+|   |   |   |-- orders/
+|   |   |   |   |-- orders.controller.ts
+|   |   |   |   |-- orders.module.ts
+|   |   |   |   |-- orders.service.ts
+|   |   |   |   `-- dto/
+|   |   |   |       |-- create-order.dto.ts
+|   |   |   |       `-- update-order-status.dto.ts
+|   |   |   |-- payments/
+|   |   |   |   |-- payments.controller.ts
+|   |   |   |   |-- payments.module.ts
+|   |   |   |   |-- payments.service.ts
+|   |   |   |   `-- dto/
+|   |   |   |       `-- create-payment.dto.ts
+|   |   |   |-- products/
+|   |   |   |   |-- products.controller.ts
+|   |   |   |   |-- products.module.ts
+|   |   |   |   `-- products.service.ts
+|   |   |   `-- users/
+|   |   |       |-- users.controller.ts
+|   |   |       |-- users.module.ts
+|   |   |       `-- users.service.ts
+|   |   `-- prisma/
+|   |       |-- prisma.module.ts
+|   |       `-- prisma.service.ts
+|   `-- test/
+|       `-- orders.service.test.mjs
+|
+|-- frontend/                         % Next.js frontend
+|   `-- src/
+|       |-- app/                      % Trang: Menu, Chi tiet, Gio hang, Checkout, Thanh toan, Don hang
+|       |   |-- layout.tsx
+|       |   |-- page.tsx
+|       |   |-- globals.css
+|       |   |-- auth/
+|       |   |   |-- login/page.tsx
+|       |   |   `-- register/page.tsx
+|       |   |-- cart/page.tsx
+|       |   |-- checkout/page.tsx
+|       |   |-- orders/
+|       |   |   |-- page.tsx
+|       |   |   |-- confirmation/page.tsx
+|       |   |   `-- [id]/page.tsx
+|       |   |-- payment/page.tsx
+|       |   `-- products/
+|       |       |-- page.tsx
+|       |       `-- [id]/page.tsx
+|       |-- components/
+|       |   `-- common/Placeholder.tsx
+|       |-- features/
+|       |   |-- auth/
+|       |   |-- cart/                 % State gio hang (Zustand), badge, validation
+|       |   |-- order/                % Checkout, xac nhan, chi tiet don
+|       |   |-- order-history/        % Lich su don hang
+|       |   |-- payment/
+|       |   |-- product/
+|       |   `-- product-detail/       % Chi tiet, gallery, so luong, san pham lien quan
+|       |-- services/api/index.ts
+|       |-- stores/index.ts
+|       `-- types/index.ts
+|
+|-- docker-compose.yml                % frontend + backend + DB
+|-- README.md
+|-- .env.example
+`-- .gitignore
+\end{verbatim}
+
+\end{document}

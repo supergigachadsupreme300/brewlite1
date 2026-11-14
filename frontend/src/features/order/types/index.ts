@@ -54,6 +54,7 @@ export interface OrderCreatePayload {
   customerInfo: CustomerPickupInfo
   paymentMethod?: PaymentMethod
   userId?: string
+  promoCode?: string
 }
 
 export interface OrderItemDetail {

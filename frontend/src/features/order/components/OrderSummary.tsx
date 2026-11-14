@@ -64,13 +64,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault()
     if (!promoInput.trim()) return
-    if (promoInput.toUpperCase() === 'BREWLITE' || promoInput.toUpperCase() === 'COFFEE10') {
-      setPromoApplied(true)
-      setPromoError(null)
-      onApplyPromo?.(promoInput.toUpperCase())
-    } else {
-      setPromoError('Mã ưu đãi không hợp lệ hoặc đã hết hạn')
-    }
+    setPromoApplied(true)
+    setPromoError(null)
+    onApplyPromo?.(promoInput.trim().toUpperCase())
   }
 
   return (
@@ -177,7 +173,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           </button>
         </div>
         {promoApplied && (
-          <p className="text-xs text-emerald-600 font-medium">✓ Đã áp dụng mã giảm giá 20.000₫!</p>
+          <p className="text-xs text-emerald-600 font-medium">✓ Đã áp dụng mã "{promoInput.toUpperCase()}". Giảm giá sẽ được tính khi đặt hàng.</p>
         )}
         {promoError && (
           <p className="text-xs text-rose-500 font-medium">{promoError}</p>

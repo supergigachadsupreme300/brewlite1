@@ -38,7 +38,7 @@ const INITIAL_CART_ITEMS: OrderItem[] = [
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<OrderItem[]>([])
-  const [discount, setDiscount] = useState<number>(0)
+  const [promoCode, setPromoCode] = useState<string | undefined>(undefined)
   const [isLoaded, setIsLoaded] = useState(false)
 
   const { submitOrder, isLoading, error, order, isSuccess, reset } = useCreateOrder()
@@ -139,16 +139,15 @@ export default function CheckoutPage() {
   // 4. Nạp lại danh sách mẫu
   const handleResetToSample = () => {
     setItems(INITIAL_CART_ITEMS)
+    setPromoCode(undefined)
     reset()
   }
 
   const subtotal = items.reduce((acc, curr) => acc + curr.lineTotal, 0)
-  const grandTotal = Math.max(0, subtotal - discount)
+  const grandTotal = subtotal
 
   const handleApplyPromo = (code: string) => {
-    if (code === 'BREWLITE' || code === 'COFFEE10') {
-      setDiscount(20000)
-    }
+    setPromoCode(code.trim().toUpperCase() || undefined)
   }
 
   // 5. Submit đơn hàng
@@ -174,6 +173,7 @@ export default function CheckoutPage() {
       total: grandTotal,
       customerInfo: data.customerInfo,
       paymentMethod: data.paymentMethod,
+      promoCode,
     }
 
     await submitOrder(payload)
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
             <OrderSummary
               items={items}
               subtotal={subtotal}
-              discount={discount}
+              discount={0}
               onApplyPromo={handleApplyPromo}
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}

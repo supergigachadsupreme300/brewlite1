@@ -1,6 +1,29 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { CreateOrderDto } from './dto/create-order.dto'
+
+const PROMO_CODES: Record<string, number> = {
+  BREWLITE: 20000,
+  COFFEE10: 20000,
+  COFFEE20: 20000,
+  WELCOME: 20000,
+  NEWBIE: 20000,
+  HELLO: 20000,
+  FIRSTORDER: 20000,
+  SUMMER: 20000,
+  WINTER: 20000,
+  SPRING: 20000,
+  AUTUMN: 20000,
+  VIP: 20000,
+  GOLD: 20000,
+  SILVER: 20000,
+  STUDENT: 20000,
+  TEACHER: 20000,
+  BREWMASTER: 20000,
+  DAILY: 20000,
+  FLASH: 20000,
+  WEEKEND: 20000,
+}
 import { UpdateOrderStatusDto, ValidOrderStatus } from './dto/update-order-status.dto'
 
 /**
@@ -39,11 +62,26 @@ export class OrdersService {
    * Default state: PENDING
    */
   async create(createOrderDto: CreateOrderDto) {
-    const { userId, items, total } = createOrderDto
+    const { userId, items } = createOrderDto
 
     if (!items || items.length === 0) {
       throw new BadRequestException('Đơn hàng phải có ít nhất 1 sản phẩm.')
     }
+
+    // Validate promo code server-side and compute the final total from items.
+    let discount = 0
+    if (createOrderDto.promoCode) {
+      const code = createOrderDto.promoCode.trim().toUpperCase()
+      if (!(code in PROMO_CODES)) {
+        throw new BadRequestException('Mã khuyến mãi không hợp lệ.')
+      }
+      discount = PROMO_CODES[code]
+    }
+    const subtotal = items.reduce(
+      (sum, it) => sum + (it.lineTotal ?? it.quantity * it.unitPrice),
+      0,
+    )
+    const finalTotal = Math.max(0, subtotal - discount)
 
     // Resolve or fallback to default customer
     let targetUserId = userId
@@ -85,7 +123,7 @@ export class OrdersService {
        const createdOrder = await tx.order.create({
          data: {
            userId: targetUserId,
-           total: total,
+           total: finalTotal,
            status: 'PENDING',
            customerName: createOrderDto.customerInfo?.customerName,
            customerPhone: createOrderDto.customerInfo?.customerPhone,

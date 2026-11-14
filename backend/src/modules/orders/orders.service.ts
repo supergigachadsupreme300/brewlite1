@@ -162,7 +162,10 @@ export class OrdersService {
    * Updates order status with strict lifecycle transition validation using assertTransition
    */
   async updateStatus(id: string, updateDto: UpdateOrderStatusDto) {
-    const order = await this.prisma.order.findUnique({ where: { id } })
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    })
     if (!order) {
       throw new NotFoundException(`Đơn hàng #${id} không tồn tại.`)
     }
@@ -173,21 +176,34 @@ export class OrdersService {
     // Assert state machine transition
     assertTransition(currentStatus, nextStatus)
 
-     const updated = await this.prisma.order.update({
-       where: { id },
-       data: { status: nextStatus },
-       include: {
-         items: {
-           include: {
-             product: true,
-           },
-         },
-         user: true,
-         payments: true,
-       },
-     })
-     return this.toOrderResponse(updated)
-   }
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: { status: nextStatus },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+          user: true,
+          payments: true,
+        },
+      })
+
+      // Restore stock when an order is cancelled (stock was deducted at creation).
+      if (nextStatus === 'CANCELLED') {
+        for (const item of order.items) {
+          await tx.product.updateMany({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          })
+        }
+      }
+
+      return this.toOrderResponse(updated)
+    })
+  }
 
   /**
    * Lists orders for a user or all orders

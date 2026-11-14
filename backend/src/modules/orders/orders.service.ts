@@ -239,6 +239,17 @@ export class OrdersService {
         }
       }
 
+      // Award loyalty points when an order becomes PAID.
+      if (nextStatus === 'PAID' && order.userId) {
+        const points = Math.floor((order.total ?? 0) / 1000)
+        if (points > 0) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { loyaltyPoints: { increment: points } },
+          })
+        }
+      }
+
       return this.toOrderResponse(updated)
     })
   }

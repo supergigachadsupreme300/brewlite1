@@ -74,6 +74,17 @@ export class PaymentsService {
         data: { status: orderStatus },
       })
 
+      // Award loyalty points when an order is successfully paid.
+      if (mockSuccess && order.userId) {
+        const points = Math.floor(order.total / 1000)
+        if (points > 0) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { loyaltyPoints: { increment: points } },
+          })
+        }
+      }
+
       return {
         paymentId: updatedPayment.id,
         orderId: order.id,

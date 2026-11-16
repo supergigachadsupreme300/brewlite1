@@ -58,4 +58,32 @@ describe('Backend OrdersService - Section 9.1 State Machine & Validation Unit Te
       }
     )
   })
+
+  // (c) Concurrency: when the atomic stock deduction loses the race
+  // (updateMany affects 0 rows), create() must abort instead of overselling.
+  it('should throw ConflictException when stock deduction loses the race (count 0)', async () => {
+    const mockTx = {
+      product: {
+        findUnique: async () => ({ id: 'p1', name: 'Cà phê', stock: 5 }),
+        updateMany: async () => ({ count: 0 }),
+      },
+      order: {
+        create: async () => ({ id: 'o1' }),
+      },
+    }
+    const mockPrisma = {
+      $transaction: async (fn) => fn(mockTx),
+    }
+    const service = new OrdersService(mockPrisma)
+    await assert.rejects(
+      async () => {
+        await service.create({
+          userId: 'u1',
+          items: [{ productId: 'p1', quantity: 2, unitPrice: 45000, lineTotal: 90000 }],
+          total: 90000,
+        })
+      },
+      { name: 'ConflictException' },
+    )
+  })
 })

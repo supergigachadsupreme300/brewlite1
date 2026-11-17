@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -11,6 +11,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const redirectIfLoggedIn = () => {
+      if (localStorage.getItem('brewlite_token')) {
+        router.push('/products')
+      }
+    }
+    redirectIfLoggedIn()
+    window.addEventListener('storage', redirectIfLoggedIn)
+    window.addEventListener('brewlite:auth-changed', redirectIfLoggedIn)
+    return () => {
+      window.removeEventListener('storage', redirectIfLoggedIn)
+      window.removeEventListener('brewlite:auth-changed', redirectIfLoggedIn)
+    }
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
